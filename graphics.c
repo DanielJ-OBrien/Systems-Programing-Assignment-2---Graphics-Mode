@@ -117,3 +117,24 @@ int sys_selectpen(void){
 	
 	return 0;
 }
+
+int sys_fillrect(void){
+	int hdc;
+	struct rect *r;
+	
+	if (argint(0, &hdc) < 0 || argptr(1, (void *)&r, sizeof(*r)) < 0){
+		return -1;
+	}
+
+	cprintf("1 = %d, 2 = %d, 3 = %d, 4 = %d", r->top, r->left, r->bottom, r->right);
+
+	for(int y=r->top; y<r->bottom; y++){
+		for(int x =r->left; x<r->right; x++){
+			int address = 0xA0000 + 320 * y + x; 
+			unsigned int *ptr = (unsigned int*)P2V(address);
+			*ptr = penColour;
+		}
+	}
+
+	return 0;
+}

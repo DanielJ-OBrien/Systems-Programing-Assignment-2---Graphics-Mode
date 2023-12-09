@@ -30,6 +30,7 @@ int moveto(int, int, int);
 int lineto(int, int, int);
 int setpencolour(int, int, int, int);
 int selectpen(int, int);
+int fillrect(int, struct rect *rect);
 
 // ulib.c
 int stat(const char*, struct stat*);
