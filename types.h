@@ -8,3 +8,8 @@ struct rect {
  int bottom; // y co-ordinate of bottom of rectangle
  int right; // x co-ordinate of right of rectangle
 };
+struct deviceContext{
+    int cX; // Current x position for drawing
+    int cY; // Current y position for drawing
+    int sPC; // Selected pen color
+};

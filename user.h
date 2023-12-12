@@ -31,6 +31,9 @@ int lineto(int, int, int);
 int setpencolour(int, int, int, int);
 int selectpen(int, int);
 int fillrect(int, struct rect *rect);
+int createcontext(int, int, int, int);
+int beginpaint(int);
+int endpaint(int);
 
 // ulib.c
 int stat(const char*, struct stat*);

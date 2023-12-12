@@ -6,8 +6,8 @@
 #include "file.h"
 #include "memlayout.h"
 
-int cgp[] = {0, 0}; // Current graphics position
-int penColour = 0x0F;
+struct deviceContext deviceContexts[10];
+int inUse = 0;
 
 void clear320x200x256() {
 	unsigned int *ptr = (unsigned int*)P2V(0xA0000);
@@ -23,7 +23,7 @@ int sys_setpixel(void){
 
 	int address = 0xA0000 + 320 * y + x; 
 	unsigned int *ptr = (unsigned int*)P2V(address);
-	*ptr = penColour;
+	*ptr = deviceContexts[hdc].sPC;
 	return 0;	
 };
 
@@ -39,8 +39,8 @@ int sys_moveto(void){
 	if(y>200){y=200;}
 	if(y<0){y=0;}
 
-	cgp[0] = x;
-	cgp[1] = y;
+	deviceContexts[hdc].cX = x;
+	deviceContexts[hdc].cY = y;
 
 	return 0;
 };
@@ -56,26 +56,26 @@ int sys_lineto(void){
         return -1;
     }
 
-    int dx = abs(x - cgp[0]);
-    int dy = abs(y - cgp[1]);
-    int sx = cgp[0] < x ? 1 : -1;
-    int sy = cgp[1] < y ? 1 : -1; // Calculates difference and direction of line
+    int dx = abs(x - deviceContexts[hdc].cX);
+    int dy = abs(y - deviceContexts[hdc].cY);
+    int sx = deviceContexts[hdc].cX < x ? 1 : -1;
+    int sy = deviceContexts[hdc].cY < y ? 1 : -1; // Calculates difference and direction of line
     int err = dx - dy;
 
-    while (cgp[0] != x || cgp[1] != y) {
+    while (deviceContexts[hdc].cX != x ||deviceContexts[hdc].cY != y) {
 
-		int address = 0xA0000 + 320 * cgp[1] + cgp[0];
+		int address = 0xA0000 + 320 * deviceContexts[hdc].cY + deviceContexts[hdc].cX;
 		unsigned int *ptr = (unsigned int*)P2V(address);
-		*ptr = penColour; // Sets the relevant pixel
+		*ptr = deviceContexts[hdc].sPC; // Sets the relevant pixel
 
         int err2 = 2 * err;
         if (err2 > -dy) {
             err -= dy;
-            cgp[0] += sx; // Calculates next location on slope
+            deviceContexts[hdc].cX += sx; // Calculates next location on slope
         }
         if (err2 < dx) {
             err += dx;
-            cgp[1] += sy;
+            deviceContexts[hdc].cY += sy;
         }
     }
 	return 0;
@@ -113,7 +113,7 @@ int sys_selectpen(void){
         return -1;
     }
 
-	penColour = index;
+	deviceContexts[hdc].sPC = index;
 	
 	return 0;
 }
@@ -126,15 +126,51 @@ int sys_fillrect(void){
 		return -1;
 	}
 
-	cprintf("1 = %d, 2 = %d, 3 = %d, 4 = %d", r->top, r->left, r->bottom, r->right);
-
 	for(int y=r->top; y<r->bottom; y++){
 		for(int x =r->left; x<r->right; x++){
 			int address = 0xA0000 + 320 * y + x; 
 			unsigned int *ptr = (unsigned int*)P2V(address);
-			*ptr = penColour;
+			*ptr = deviceContexts[hdc].sPC;
 		}
 	}
+
+	return 0;
+}
+
+int sys_createcontext(void){
+	int x, y, colour, context;
+
+    if ((argint(0, &x) < 0) || (argint(1, &y) < 0) || (argint(2, &colour) < 0) || (argint(3, &context) < 0)){
+        return -1;
+    }
+
+	deviceContexts[context].cX = x;
+	deviceContexts[context].cY = y;
+	deviceContexts[context].sPC = colour;
+	return 0;
+
+}
+
+int sys_beginpaint(void){
+	int hwnd;
+
+    if (argint(0, &hwnd) < 0){
+        return -1;
+    }
+
+	inUse+=1;
+
+	return (inUse-1);
+}
+
+int sys_endpaint(void){
+	int hdc;
+
+    if (argint(0, &hdc) < 0){
+        return -1;
+    }
+
+	inUse-=1;
 
 	return 0;
 }

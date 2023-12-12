@@ -43,6 +43,9 @@ my @syscalls = (
 				"setpencolour",
 				"selectpen",
 				"fillrect",
+				"createcontext",
+				"beginpaint",
+				"endpaint",
 			   );
 
 my $i;			   
